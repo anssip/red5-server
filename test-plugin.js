@@ -11,22 +11,24 @@ class TestPlugin {
   onDisconnect(conn) {
     this.connection = null;
     this.log("onDisconnect");
+    this.server.removeConnectListener(this.connectListenerId);
   }
 
   doStart() {
     this.log("doStart");
     const log = this.log.bind(this);
+    const onConnect = this.onConnect.bind(this);
+    const onDisconnect = this.onConnect.bind(this);
 
-    return this.server.addConnectListener(
-      conn => log(`Connected: protocol is ${conn.getProtocol()}`),
-      conn =>
-        log(`Disconnected: number of read messages  ${conn.getReadMessages()}`)
+    this.connectListenerId = this.server.addConnectListener(
+      onConnect,
+      onDisconnect
     );
   }
 
   doStop() {
     this.log("doStop");
-    // return this.server.removeConnectListener();
+    this.server.removeConnectListener(this.connectListenerId);
   }
 
   getName() {

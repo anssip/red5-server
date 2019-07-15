@@ -18,6 +18,7 @@ import org.red5.server.api.scope.IGlobalScope;
 public class JavaScriptServerWrapper {
     protected static Logger log = LoggerFactory.getLogger(JavaScriptServerWrapper.class);
     private final IServer server;
+    private List<IConnectionListener> connectionListeners = new ArrayList<IConnectionListener>();
 
     public JavaScriptServerWrapper(IServer server) {
         this.server = server;
@@ -93,11 +94,18 @@ public class JavaScriptServerWrapper {
             }
         };
         this.server.addListener(listener);
-        return 1;
+        connectionListeners.add(listener);
+        return connectionListeners.indexOf(listener);
     }
 
-    public void removeConnectListener(int id) {
+    public void removeConnectListener(int index) {
         log.debug("removeConnectListener");
+        IConnectionListener listener = connectionListeners.get(index);
+        if (listener == null) {
+            return;
+        }
+        this.server.removeListener(listener);
+        connectionListeners.set(index, null); // don't remove because that would shift the indexes
     }
 
     public void addDisconnectListener(Value callback) {
