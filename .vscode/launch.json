@@ -1,0 +1,17 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Debug Red5-server",
+      "request": "launch",
+      "mainClass": "org.red5.server.Bootstrap",
+      // "classPaths": ["src/main/server/conf", "target/classes"],
+      // "sourcePaths": ["src/main/server/conf"],
+      "vmArgs": "-Dred5.root=src/main/server -Xms256m -Xmx1g -Xverify:none -XX:+TieredCompilation -XX:+UseBiasedLocking -XX:InitialCodeCacheSize=8m -XX:ReservedCodeCacheSize=32m -Dorg.terracotta.quartz.skipUpdateCheck=true"
+    }
+  ]
+}

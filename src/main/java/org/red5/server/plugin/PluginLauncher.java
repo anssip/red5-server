@@ -20,12 +20,14 @@ package org.red5.server.plugin;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import org.red5.server.Server;
+import org.red5.server.api.IServer;
 import org.red5.server.api.plugin.IRed5Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,9 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+
+import org.graalvm.polyglot.*;
+import org.graalvm.polyglot.proxy.*;
 
 /**
  * Creates the plug-in environment and cleans up on shutdown.
@@ -49,10 +54,24 @@ public class PluginLauncher implements ApplicationContextAware, InitializingBean
     private ApplicationContext applicationContext;
 
     public void afterPropertiesSet() throws Exception {
-        // get common context
         ApplicationContext common = (ApplicationContext) applicationContext.getBean("red5.common");
         Server server = (Server) common.getBean("red5.server");
-        //server should be up and running at this point so load any plug-ins now
+        this.launchJavaScriptPlugins(new JavaScriptServerWrapper(server));
+        this.launchPlugins(common, server);
+    }
+
+    private void launchJavaScriptPlugins(IServer server) throws Exception {
+        // TODO: Scan through the JS plugin folder and instantiate from all plugin JS
+        // files
+
+        IRed5Plugin plugin = new JavaScriptPlugin("./test-plugin.js");
+        plugin.setApplicationContext(applicationContext);
+        ((JavaScriptPlugin) plugin).setServer(server);
+        PluginRegistry.register(plugin);
+        plugin.doStart();
+    }
+
+    private void launchPlugins(ApplicationContext common, Server server) throws IOException {
 
         // get the plugins dir
         File pluginsDir = new File(System.getProperty("red5.root"), "plugins");
@@ -92,7 +111,8 @@ public class PluginLauncher implements ApplicationContextAware, InitializingBean
                 if (pluginMainClass == null || pluginMainClass.length() <= 0) {
                     continue;
                 }
-                // attempt to load the class; since it's in the plugins directory this should work
+                // attempt to load the class; since it's in the plugins directory this should
+                // work
                 ClassLoader loader = common.getClassLoader();
                 Class<?> pluginClass;
                 String pluginMainMethod = null;
@@ -134,7 +154,6 @@ public class PluginLauncher implements ApplicationContextAware, InitializingBean
         } else {
             log.info("Plugins directory cannot be accessed or doesnt exist");
         }
-
     }
 
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
