@@ -14,35 +14,40 @@ import org.red5.server.api.IServer;
 import org.red5.server.api.listeners.IConnectionListener;
 import org.red5.server.api.listeners.IScopeListener;
 import org.red5.server.api.scope.IGlobalScope;
+import org.red5.server.api.scope.IScope;
 
 public class JavaScriptServerWrapper {
     protected static Logger log = LoggerFactory.getLogger(JavaScriptServerWrapper.class);
     private final IServer server;
+    private final JavaScriptPlugin plugin;
     private List<IConnectionListener> connectionListeners = new ArrayList<IConnectionListener>();
+    private List<IScopeListener> scopeListeners = new ArrayList<IScopeListener>();
 
-    public JavaScriptServerWrapper(IServer server) {
+    public JavaScriptServerWrapper(IServer server, JavaScriptPlugin plugin) {
         this.server = server;
+        this.plugin = plugin;
     }
 
-    public IGlobalScope getGlobal(String name) {
-        return this.server.getGlobal(name);
-    }
+    // public IGlobalScope getGlobal(String name) {
+    // return this.server.getGlobal(name);
+    // }
 
-    public IGlobalScope lookupGlobal(String hostName, String contextPath) {
-        return null;
-    }
+    // public IGlobalScope lookupGlobal(String hostName, String contextPath) {
+    // return null;
+    // }
 
-    public boolean addMapping(String hostName, String contextPath, String globalName) {
-        return false;
-    }
+    // public boolean addMapping(String hostName, String contextPath, String
+    // globalName) {
+    // return false;
+    // }
 
-    public boolean removeMapping(String hostName, String contextPath) {
-        return false;
-    }
+    // public boolean removeMapping(String hostName, String contextPath) {
+    // return false;
+    // }
 
-    public Map<String, String> getMappingTable() {
-        return null;
-    }
+    // public Map<String, String> getMappingTable() {
+    // return null;
+    // }
 
     public ProxyArray getGlobalNames() {
         Iterator<String> nameIterator = this.server.getGlobalNames();
@@ -71,12 +76,40 @@ public class JavaScriptServerWrapper {
         return null;
     }
 
-    public void addScopeListener(IScopeListener listener) {
+    public int addScopeListener(Value scopeCreatedCallback, Value scopeRemovedCallback) {
+        log.debug("addScopeListener");
+        IScopeListener listener = new IScopeListener() {
 
+            @Override
+            public void notifyScopeCreated(IScope scope) {
+                try {
+                    plugin.executeInContext(scopeCreatedCallback, scope);
+                    // scopeCreatedCallback.execute(scope);
+                } catch (Exception e) {
+                    log.error("Failed to call scopeRemovedCallback", e);
+                }
+            }
+
+            @Override
+            public void notifyScopeRemoved(IScope scope) {
+                plugin.executeInContext(scopeRemovedCallback, scope);
+                // scopeRemovedCallback.execute(scope);
+            }
+
+        };
+        this.server.addListener(listener);
+        scopeListeners.add(listener);
+        return scopeListeners.indexOf(listener);
     }
 
-    public void removeScopeListener(IScopeListener listener) {
-
+    public void removeScopeListener(int index) {
+        log.debug("removeScopeListener");
+        IScopeListener listener = scopeListeners.get(index);
+        if (listener == null) {
+            return;
+        }
+        this.server.removeListener(listener);
+        scopeListeners.set(index, null); // don't remove because that would shift the indexes
     }
 
     public int addConnectListener(Value connectCallback, Value disconnectCallback) {
@@ -85,12 +118,14 @@ public class JavaScriptServerWrapper {
 
             @Override
             public void notifyDisconnected(IConnection conn) {
-                disconnectCallback.execute(conn);
+                plugin.executeInContext(disconnectCallback, conn);
+                // disconnectCallback.execute(conn);
             }
 
             @Override
             public void notifyConnected(IConnection conn) {
-                connectCallback.execute(conn);
+                plugin.executeInContext(connectCallback, conn);
+                // connectCallback.execute(conn);
             }
         };
         this.server.addListener(listener);

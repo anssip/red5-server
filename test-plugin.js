@@ -4,19 +4,28 @@ class TestPlugin {
   }
 
   onConnect(conn) {
+    this.log(`onConnect ${conn.toString()}`);
     this.connection = conn;
-    this.log("onConnect");
   }
 
   onDisconnect(conn) {
-    this.connection = null;
     this.log("onDisconnect");
+    this.connection = null;
     this.server.removeConnectListener(this.connectListenerId);
+  }
+
+  onScopeCreated(scope) {
+    this.log(`onScopeCreated ${scope.toString()}`);
+    this.scope = scope;
+  }
+
+  onScopeRemoved(scope) {
+    this.log("onScopeRemoved");
+    this.scope = null;
   }
 
   doStart() {
     this.log("doStart");
-    const log = this.log.bind(this);
     const onConnect = this.onConnect.bind(this);
     const onDisconnect = this.onConnect.bind(this);
 
@@ -24,11 +33,20 @@ class TestPlugin {
       onConnect,
       onDisconnect
     );
+
+    const onScopeCreated = this.onScopeCreated.bind(this);
+    const onScopeRemoved = this.onScopeRemoved.bind(this);
+
+    this.scopeListenerId = this.server.addScopeListener(
+      onScopeCreated,
+      onScopeRemoved
+    );
   }
 
   doStop() {
     this.log("doStop");
     this.server.removeConnectListener(this.connectListenerId);
+    this.server.removeScopeListener(this.scopeListenerId);
   }
 
   getName() {

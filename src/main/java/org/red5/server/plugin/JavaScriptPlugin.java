@@ -4,6 +4,10 @@ import org.red5.server.Server;
 import org.red5.server.api.IServer;
 import org.red5.server.api.plugin.IRed5Plugin;
 import org.springframework.context.ApplicationContext;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.catalina.Host;
 import org.graalvm.polyglot.*;
 import org.graalvm.polyglot.proxy.*;
@@ -34,7 +38,17 @@ public class JavaScriptPlugin implements IRed5Plugin {
         if (member == null) {
             throw new IllegalStateException("Function " + functionName + " missing from JavaScript plugin");
         }
-        return member.execute(args);
+        return this.executeInContext(member, args);
+    }
+
+    protected Value executeInContext(Value member, Object... args) {
+        Value result;
+        synchronized (this.ctx) {
+            this.ctx.enter();
+            result = member.execute(args);
+            this.ctx.leave();
+        }
+        return result;
     }
 
     private Value executeJs(String functionName) {
@@ -56,7 +70,7 @@ public class JavaScriptPlugin implements IRed5Plugin {
 
     @Override
     public void setServer(Server server) {
-        this.executeJs("setServer", new JavaScriptServerWrapper(server));
+        this.executeJs("setServer", new JavaScriptServerWrapper(server, this));
     }
 
     // for testing purposes
