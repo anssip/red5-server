@@ -19,6 +19,7 @@
 package org.red5.server.plugin;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -58,14 +59,24 @@ public class PluginLauncher implements ApplicationContextAware, InitializingBean
     }
 
     private void launchJavaScriptPlugins(Server server) throws Exception {
-        // TODO: Scan through the JS plugin folder and instantiate from all plugin JS
-        // files
+        String workingDir = new File(".").getCanonicalPath();
+        File jsFolder = new File(workingDir + "/src/main/server/plugins/");
+        File[] jsFiles = jsFolder.listFiles(new FileFilter() {
 
-        IRed5Plugin plugin = new JavaScriptPlugin("./test-plugin.js");
-        plugin.setApplicationContext(applicationContext);
-        plugin.setServer(server);
-        PluginRegistry.register(plugin);
-        plugin.doStart();
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.getPath().endsWith(".js");
+            }
+        });
+        if (jsFiles != null) {
+            for (File pluginFile : jsFiles) {
+                IRed5Plugin plugin = new JavaScriptPlugin(pluginFile.getPath());
+                plugin.setApplicationContext(applicationContext);
+                plugin.setServer(server);
+                PluginRegistry.register(plugin);
+                plugin.doStart();
+            }
+        }
     }
 
     private void launchPlugins(ApplicationContext common, Server server) throws IOException {
