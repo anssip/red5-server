@@ -4,6 +4,7 @@ import org.junit.Test;
 import org.junit.Before;
 import static org.junit.Assert.assertEquals;
 import org.red5.server.Server;
+import org.red5.server.api.listeners.IScopeListener;
 import org.graalvm.polyglot.*;
 
 public class JavaScriptPluginTest {
@@ -23,13 +24,10 @@ public class JavaScriptPluginTest {
 
     @Test
     public void testCanCacheAndUseServerInstance() throws Exception {
-        this.plugin.setServer(new Server() {
-            public String toString() {
-                return "jeebar";
-            }
+        this.plugin.setServerWrapper(new JavaScriptServerWrapper(null) {
         });
-        String name = this.plugin.getName();
-        assertEquals("jeebar", name);
+        this.plugin.doStart();
+        this.plugin.doStop();
     }
 
 }

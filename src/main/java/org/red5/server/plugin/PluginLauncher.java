@@ -56,17 +56,17 @@ public class PluginLauncher implements ApplicationContextAware, InitializingBean
     public void afterPropertiesSet() throws Exception {
         ApplicationContext common = (ApplicationContext) applicationContext.getBean("red5.common");
         Server server = (Server) common.getBean("red5.server");
-        this.launchJavaScriptPlugins(new JavaScriptServerWrapper(server));
+        this.launchJavaScriptPlugins(server);
         this.launchPlugins(common, server);
     }
 
-    private void launchJavaScriptPlugins(IServer server) throws Exception {
+    private void launchJavaScriptPlugins(Server server) throws Exception {
         // TODO: Scan through the JS plugin folder and instantiate from all plugin JS
         // files
 
         IRed5Plugin plugin = new JavaScriptPlugin("./test-plugin.js");
         plugin.setApplicationContext(applicationContext);
-        ((JavaScriptPlugin) plugin).setServer(server);
+        plugin.setServer(server);
         PluginRegistry.register(plugin);
         plugin.doStart();
     }

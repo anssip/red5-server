@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class JavaScriptPlugin implements IRed5Plugin {
-    protected static Logger log = LoggerFactory.getLogger(PluginLauncher.class);
+    protected static Logger log = LoggerFactory.getLogger(JavaScriptPlugin.class);
 
     private Context ctx;
     private Value plugin;
@@ -56,10 +56,11 @@ public class JavaScriptPlugin implements IRed5Plugin {
 
     @Override
     public void setServer(Server server) {
-        this.executeJs("setServer", server);
+        this.executeJs("setServer", new JavaScriptServerWrapper(server));
     }
 
-    public void setServer(IServer server) {
+    // for testing purposes
+    public void setServerWrapper(JavaScriptServerWrapper server) {
         this.executeJs("setServer", server);
     }
 

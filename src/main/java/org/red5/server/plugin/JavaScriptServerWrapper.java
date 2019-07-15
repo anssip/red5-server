@@ -4,15 +4,19 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyArray;
+import org.red5.server.api.IConnection;
 import org.red5.server.api.IServer;
 import org.red5.server.api.listeners.IConnectionListener;
 import org.red5.server.api.listeners.IScopeListener;
 import org.red5.server.api.scope.IGlobalScope;
 
-public class JavaScriptServerWrapper implements IServer {
+public class JavaScriptServerWrapper {
+    protected static Logger log = LoggerFactory.getLogger(JavaScriptServerWrapper.class);
     private final IServer server;
 
     public JavaScriptServerWrapper(IServer server) {
@@ -21,10 +25,6 @@ public class JavaScriptServerWrapper implements IServer {
 
     public IGlobalScope getGlobal(String name) {
         return this.server.getGlobal(name);
-    }
-
-    public void registerGlobal(IGlobalScope scope) {
-
     }
 
     public IGlobalScope lookupGlobal(String hostName, String contextPath) {
@@ -43,13 +43,12 @@ public class JavaScriptServerWrapper implements IServer {
         return null;
     }
 
-    public ProxyArray getGlobalScopeNames() {
+    public ProxyArray getGlobalNames() {
         Iterator<String> nameIterator = this.server.getGlobalNames();
         List<String> list = new ArrayList<>();
         nameIterator.forEachRemaining(list::add);
 
         return new ProxyArray() {
-
             @Override
             public void set(long index, Value value) {
                 throw new UnsupportedOperationException();
@@ -71,24 +70,41 @@ public class JavaScriptServerWrapper implements IServer {
         return null;
     }
 
-    public void addListener(IScopeListener listener) {
+    public void addScopeListener(IScopeListener listener) {
 
     }
 
-    public void addListener(IConnectionListener listener) {
+    public void removeScopeListener(IScopeListener listener) {
 
     }
 
-    public void removeListener(IScopeListener listener) {
+    public int addConnectListener(Value connectCallback, Value disconnectCallback) {
+        log.debug("addConnectListener");
+        IConnectionListener listener = new IConnectionListener() {
 
+            @Override
+            public void notifyDisconnected(IConnection conn) {
+                disconnectCallback.execute(conn);
+            }
+
+            @Override
+            public void notifyConnected(IConnection conn) {
+                connectCallback.execute(conn);
+            }
+        };
+        this.server.addListener(listener);
+        return 1;
     }
 
-    public void removeListener(IConnectionListener listener) {
-
+    public void removeConnectListener(int id) {
+        log.debug("removeConnectListener");
     }
 
-    @Override
-    public Iterator<String> getGlobalNames() {
-        return null;
+    public void addDisconnectListener(Value callback) {
+        log.debug("addConnectionListener");
+    }
+
+    public void removeConnectionListener(Value notifyConnected) {
+
     }
 }
