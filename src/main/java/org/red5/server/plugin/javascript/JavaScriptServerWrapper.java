@@ -1,4 +1,4 @@
-package org.red5.server.plugin;
+package org.red5.server.plugin.javascript;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -72,9 +72,9 @@ public class JavaScriptServerWrapper {
         };
     }
 
-    public Iterator<IGlobalScope> getGlobalScopes() {
-        return null;
-    }
+    // public Iterator<IGlobalScope> getGlobalScopes() {
+    // return null;
+    // }
 
     public int addScopeListener(Value scopeCreatedCallback, Value scopeRemovedCallback) {
         log.debug("addScopeListener");

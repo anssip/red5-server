@@ -1,11 +1,9 @@
-package org.red5.server.plugin;
+package org.red5.server.plugin.javascript;
 
 import org.junit.Test;
 import org.junit.Before;
 import static org.junit.Assert.assertEquals;
-import org.red5.server.Server;
-import org.red5.server.api.listeners.IScopeListener;
-import org.graalvm.polyglot.*;
+import org.red5.server.plugin.javascript.JavaScriptPlugin;
 
 public class JavaScriptPluginTest {
 
@@ -24,7 +22,7 @@ public class JavaScriptPluginTest {
 
     @Test
     public void testCanCacheAndUseServerInstance() throws Exception {
-        this.plugin.setServerWrapper(new JavaScriptServerWrapper(null) {
+        this.plugin.setServerWrapper(new JavaScriptServerWrapper(null, this.plugin) {
         });
         this.plugin.doStart();
         this.plugin.doStop();

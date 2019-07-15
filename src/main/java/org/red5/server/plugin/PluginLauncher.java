@@ -27,17 +27,14 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import org.red5.server.Server;
-import org.red5.server.api.IServer;
 import org.red5.server.api.plugin.IRed5Plugin;
+import org.red5.server.plugin.javascript.JavaScriptPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-
-import org.graalvm.polyglot.*;
-import org.graalvm.polyglot.proxy.*;
 
 /**
  * Creates the plug-in environment and cleans up on shutdown.

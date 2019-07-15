@@ -1,16 +1,10 @@
-package org.red5.server.plugin;
+package org.red5.server.plugin.javascript;
 
 import org.red5.server.Server;
-import org.red5.server.api.IServer;
 import org.red5.server.api.plugin.IRed5Plugin;
 import org.springframework.context.ApplicationContext;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.apache.catalina.Host;
 import org.graalvm.polyglot.*;
-import org.graalvm.polyglot.proxy.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +35,7 @@ public class JavaScriptPlugin implements IRed5Plugin {
         return this.executeInContext(member, args);
     }
 
-    protected Value executeInContext(Value member, Object... args) {
+    public Value executeInContext(Value member, Object... args) {
         Value result;
         synchronized (this.ctx) {
             this.ctx.enter();
