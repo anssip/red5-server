@@ -15,9 +15,12 @@ class TestPlugin {
 
   doStart() {
     this.log("doStart");
+    const log = this.log.bind(this);
+
     return this.server.addConnectListener(
-      this.onConnect.bind(this),
-      this.onDisconnect.bind(this)
+      conn => log(`Connected: protocol is ${conn.getProtocol()}`),
+      conn =>
+        log(`Disconnected: number of read messages  ${conn.getReadMessages()}`)
     );
   }
 
