@@ -64,11 +64,11 @@ public class JavaScriptPlugin implements IRed5Plugin {
 
     @Override
     public void setServer(Server server) {
-        this.executeJs("setServer", new JavaScriptServerWrapper(server, this));
+        this.executeJs("setServer", new ServerJs(server, this));
     }
 
     // for testing purposes
-    public void setServerWrapper(JavaScriptServerWrapper server) {
+    public void setServerWrapper(ServerJs server) {
         this.executeJs("setServer", server);
     }
 

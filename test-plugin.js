@@ -57,7 +57,7 @@ class TestPlugin {
   setServer(server) {
     this.log("setServer");
     this.server = server;
-    // this.log("Global names: " + JSON.stringify(server.getGlobalNames()));s
+    this.log("Global names: " + JSON.stringify(server.getGlobalNames()));
   }
 
   setApplicationContext(context) {

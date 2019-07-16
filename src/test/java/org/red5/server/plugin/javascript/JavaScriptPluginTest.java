@@ -22,7 +22,7 @@ public class JavaScriptPluginTest {
 
     @Test
     public void testCanCacheAndUseServerInstance() throws Exception {
-        this.plugin.setServerWrapper(new JavaScriptServerWrapper(null, this.plugin) {
+        this.plugin.setServerWrapper(new ServerJs(null, this.plugin) {
         });
         this.plugin.doStart();
         this.plugin.doStop();

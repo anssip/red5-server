@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyArray;
+import org.graalvm.polyglot.proxy.ProxyObject;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.IServer;
 import org.red5.server.api.listeners.IConnectionListener;
@@ -16,43 +18,25 @@ import org.red5.server.api.listeners.IScopeListener;
 import org.red5.server.api.scope.IGlobalScope;
 import org.red5.server.api.scope.IScope;
 
-public class JavaScriptServerWrapper {
-    protected static Logger log = LoggerFactory.getLogger(JavaScriptServerWrapper.class);
+public class ServerJs {
+    protected static Logger log = LoggerFactory.getLogger(ServerJs.class);
     private final IServer server;
     private final JavaScriptPlugin plugin;
     private List<IConnectionListener> connectionListeners = new ArrayList<IConnectionListener>();
     private List<IScopeListener> scopeListeners = new ArrayList<IScopeListener>();
 
-    public JavaScriptServerWrapper(IServer server, JavaScriptPlugin plugin) {
+    public ServerJs(IServer server, JavaScriptPlugin plugin) {
         this.server = server;
         this.plugin = plugin;
     }
 
-    // public IGlobalScope getGlobal(String name) {
-    // return this.server.getGlobal(name);
-    // }
-
-    // public IGlobalScope lookupGlobal(String hostName, String contextPath) {
-    // return null;
-    // }
-
-    // public boolean addMapping(String hostName, String contextPath, String
-    // globalName) {
-    // return false;
-    // }
-
-    // public boolean removeMapping(String hostName, String contextPath) {
-    // return false;
-    // }
-
-    // public Map<String, String> getMappingTable() {
-    // return null;
-    // }
-
     public ProxyArray getGlobalNames() {
-        Iterator<String> nameIterator = this.server.getGlobalNames();
-        List<String> list = new ArrayList<>();
-        nameIterator.forEachRemaining(list::add);
+        return this.createProxyArray(this.server.getGlobalNames());
+    }
+
+    private <T> ProxyArray createProxyArray(Iterator<T> iterator) {
+        List<T> list = new ArrayList<>();
+        iterator.forEachRemaining(list::add);
 
         return new ProxyArray() {
             @Override
@@ -72,10 +56,6 @@ public class JavaScriptServerWrapper {
         };
     }
 
-    // public Iterator<IGlobalScope> getGlobalScopes() {
-    // return null;
-    // }
-
     public int addScopeListener(Value scopeCreatedCallback, Value scopeRemovedCallback) {
         log.debug("addScopeListener");
         IScopeListener listener = new IScopeListener() {
@@ -84,7 +64,6 @@ public class JavaScriptServerWrapper {
             public void notifyScopeCreated(IScope scope) {
                 try {
                     plugin.executeInContext(scopeCreatedCallback, scope);
-                    // scopeCreatedCallback.execute(scope);
                 } catch (Exception e) {
                     log.error("Failed to call scopeRemovedCallback", e);
                 }
@@ -93,7 +72,6 @@ public class JavaScriptServerWrapper {
             @Override
             public void notifyScopeRemoved(IScope scope) {
                 plugin.executeInContext(scopeRemovedCallback, scope);
-                // scopeRemovedCallback.execute(scope);
             }
 
         };
@@ -119,13 +97,11 @@ public class JavaScriptServerWrapper {
             @Override
             public void notifyDisconnected(IConnection conn) {
                 plugin.executeInContext(disconnectCallback, conn);
-                // disconnectCallback.execute(conn);
             }
 
             @Override
             public void notifyConnected(IConnection conn) {
                 plugin.executeInContext(connectCallback, conn);
-                // connectCallback.execute(conn);
             }
         };
         this.server.addListener(listener);
@@ -143,11 +119,57 @@ public class JavaScriptServerWrapper {
         connectionListeners.set(index, null); // don't remove because that would shift the indexes
     }
 
-    public void addDisconnectListener(Value callback) {
-        log.debug("addConnectionListener");
+    public IGlobalScope getGlobal(String name) {
+        // TODO: return a Scope wrapper
+        return null;
     }
 
-    public void removeConnectionListener(Value notifyConnected) {
+    // public void registerGlobal(IGlobalScope scope) {
 
+    // }
+
+    public IGlobalScope lookupGlobal(String hostName, String contextPath) {
+        return null;
     }
+
+    public boolean addMapping(String hostName, String contextPath, String globalName) {
+        return this.server.addMapping(hostName, contextPath, globalName);
+    }
+
+    public boolean removeMapping(String hostName, String contextPath) {
+        return this.server.removeMapping(hostName, contextPath);
+    }
+
+    public ProxyObject getMappingTable() {
+        Map<String, String> table = this.server.getMappingTable();
+
+        return new ProxyObject() {
+
+            @Override
+            public void putMember(String key, Value value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean hasMember(String key) {
+                return table.containsKey(key);
+            }
+
+            @Override
+            public Object getMemberKeys() {
+                return new ArrayList(table.keySet());
+            }
+
+            @Override
+            public Object getMember(String key) {
+                return table.get(key);
+            }
+        };
+    }
+
+    // TODO: unable to get this work
+    // public ProxyArray getGlobalScopes() {
+    // // return createProxyArray(this.server.getGlobalScopes());
+    // }
+
 }
