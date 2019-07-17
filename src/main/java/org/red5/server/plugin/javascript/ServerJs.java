@@ -1,9 +1,12 @@
 package org.red5.server.plugin.javascript;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +21,8 @@ import org.red5.server.api.listeners.IScopeListener;
 import org.red5.server.api.scope.IGlobalScope;
 import org.red5.server.api.scope.IScope;
 
+import org.graalvm.polyglot.*;
+
 public class ServerJs {
     protected static Logger log = LoggerFactory.getLogger(ServerJs.class);
     private final IServer server;
@@ -31,29 +36,20 @@ public class ServerJs {
     }
 
     public ProxyArray getGlobalNames() {
-        return this.createProxyArray(this.server.getGlobalNames());
+        return JsUtil.createProxyArray(this.server.getGlobalNames());
     }
 
-    private <T> ProxyArray createProxyArray(Iterator<T> iterator) {
-        List<T> list = new ArrayList<>();
-        iterator.forEachRemaining(list::add);
-
-        return new ProxyArray() {
-            @Override
-            public void set(long index, Value value) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public long getSize() {
-                return list.size();
-            }
-
-            @Override
-            public Object get(long index) {
-                return list.get((int) index);
-            }
-        };
+    /**
+     * Gets a global scope having the specified name.
+     * 
+     * @param name
+     * @return
+     */
+    // @HostAccess.Export
+    public ScopeJs getGlobalScope(String name) {
+        IGlobalScope myScope = asStream(this.server.getGlobalScopes()).filter(scope -> name.equals(scope.getName()))
+                .findAny().orElse(null);
+        return new ScopeJs(myScope, this.plugin);
     }
 
     public int addScopeListener(Value scopeCreatedCallback, Value scopeRemovedCallback) {
@@ -63,7 +59,7 @@ public class ServerJs {
             @Override
             public void notifyScopeCreated(IScope scope) {
                 try {
-                    plugin.executeInContext(scopeCreatedCallback, scope);
+                    plugin.executeInContext(scopeCreatedCallback, new ScopeJs(scope, plugin));
                 } catch (Exception e) {
                     log.error("Failed to call scopeRemovedCallback", e);
                 }
@@ -71,7 +67,7 @@ public class ServerJs {
 
             @Override
             public void notifyScopeRemoved(IScope scope) {
-                plugin.executeInContext(scopeRemovedCallback, scope);
+                plugin.executeInContext(scopeRemovedCallback, new ScopeJs(scope, plugin));
             }
 
         };
@@ -167,9 +163,18 @@ public class ServerJs {
         };
     }
 
-    // TODO: unable to get this work
-    // public ProxyArray getGlobalScopes() {
-    // // return createProxyArray(this.server.getGlobalScopes());
-    // }
+    public ProxyArray getGlobalScopes() {
+        return JsUtil.createProxyArray(this.server.getGlobalScopes());
+    }
 
+    // Utilities that could be refactored to a separate util class:
+
+    private static <T> Stream<T> asStream(Iterator<T> sourceIterator) {
+        return asStream(sourceIterator, false);
+    }
+
+    private static <T> Stream<T> asStream(Iterator<T> sourceIterator, boolean parallel) {
+        Iterable<T> iterable = () -> sourceIterator;
+        return StreamSupport.stream(iterable.spliterator(), parallel);
+    }
 }

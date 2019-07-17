@@ -1,4 +1,8 @@
 class TestPlugin {
+  constructor() {
+    this.scopes = [];
+  }
+
   log(msg) {
     console.log(`JavaScript TestPlugin:: ${msg}`);
   }
@@ -15,13 +19,25 @@ class TestPlugin {
   }
 
   onScopeCreated(scope) {
-    this.log(`onScopeCreated ${scope.toString()}`);
-    this.scope = scope;
+    this.log(`onScopeCreated ${scope.getType()}`);
+    this.scopes.push(scope);
+
+    if (scope.getName() === "oflaDemo") {
+      this.scopes.forEach(scope => {
+        this.log(
+          `Under ${scope.getName()}: basic scope names: ${scope.getBasicScopeNames(
+            "APPLICATION"
+          )}`
+        );
+        this.log(
+          `${scope.getName()} handler application ${scope.getApplication()}`
+        );
+      });
+    }
   }
 
   onScopeRemoved(scope) {
     this.log("onScopeRemoved");
-    this.scope = null;
   }
 
   doStart() {
@@ -41,6 +57,8 @@ class TestPlugin {
       onScopeCreated,
       onScopeRemoved
     );
+
+    // this.log("Basic scope names: " + this.scope.getBasicScopeNames());
   }
 
   doStop() {
@@ -58,7 +76,9 @@ class TestPlugin {
     this.log("setServer");
     this.server = server;
     this.log("Global names: " + JSON.stringify(server.getGlobalNames()));
-    this.log("Mapping table: " + JSON.stringify(server.getMappingTable()));
+    this.log("Mapping table: " + server.getMappingTable());
+    this.log("Default scope: " + server.getGlobalScope("default"));
+    this.log("Global scopes: " + server.getGlobalScopes());
   }
 
   setApplicationContext(context) {
