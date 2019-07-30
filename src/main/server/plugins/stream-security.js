@@ -3,6 +3,22 @@ class StreamSecurity {
     console.log(`JavaScript StreamSecurity plugin: ${msg}`);
   }
 
+  doStart() {
+    this.log("doStart");
+
+    /*
+     * Register a listener for scope creation and removal.
+     * We can tap into the Applications' event handlers through the scope that we receive in the listener.
+     */
+    const onScopeCreated = this.onScopeCreated.bind(this);
+    const onScopeRemoved = this.onScopeRemoved.bind(this);
+
+    this.scopeListenerId = this.server.addScopeListener(
+      onScopeCreated,
+      onScopeRemoved
+    );
+  }
+
   isPublishAllowed() {
     this.log("isPublishAllowed");
     // change following to return false if you want to prevent publishing
@@ -10,15 +26,17 @@ class StreamSecurity {
   }
 
   isPlaybackAllowed() {
-    this.log("isPlaybackAllowed");
-    return false;
+    // randomly return true or false
+    const result = new Date().getTime() % 2 === 0;
+    this.log("isPlaybackAllowed? " + result);
+    return result;
   }
 
   onScopeCreated(scope) {
     this.log(`onScopeCreated ${scope.getType()}`);
 
     /*
-     * Register the publish permission checker to all scopes.
+     * Register a publish permission checker to all scopes.
      */
     const checkIsPublishAllowed = this.isPublishAllowed.bind(this);
     scope.getApplication().registerStreamPublishSecurity(checkIsPublishAllowed);
@@ -38,30 +56,16 @@ class StreamSecurity {
 
   setServer(server) {
     this.log("setServer");
+    // store the server object as we need it in the other methods.
     this.server = server;
   }
 
-  doStart() {
-    this.log("doStart");
-
-    const onScopeCreated = this.onScopeCreated.bind(this);
-    const onScopeRemoved = this.onScopeRemoved.bind(this);
-
-    this.scopeListenerId = this.server.addScopeListener(
-      onScopeCreated,
-      onScopeRemoved
-    );
-
-    // this.log("Basic scope names: " + this.scope.getBasicScopeNames());
-  }
-
+  /**
+   * Gets the name of this plugin. This function needs to present.
+   */
   getName() {
     this.log("getName");
     return "StreamSecurity JS Plugin";
-  }
-
-  setApplicationContext(context) {
-    this.log("setApplicationContext");
   }
 }
 
