@@ -60,7 +60,9 @@ public class ApplicationJs {
         IStreamPublishSecurity security = new IStreamPublishSecurity() {
             @Override
             public boolean isPublishAllowed(IScope scope, String name, String mode) {
-                return plugin.executeInContext(isPublishAllowedCallback).asBoolean();
+                boolean allowed = plugin.executeInContext(isPublishAllowedCallback).asBoolean();
+                log.debug("Is publish allowed by the JS plugin? " + allowed);
+                return allowed;
             }
         };
         this.app.registerStreamPublishSecurity(security);

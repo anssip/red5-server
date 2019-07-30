@@ -18,9 +18,17 @@ class TestPlugin {
     this.server.removeConnectListener(this.connectListenerId);
   }
 
+  isPublishAllowed() {
+    this.log("isPublishAllowed");
+    return true;
+  }
+
   onScopeCreated(scope) {
     this.log(`onScopeCreated ${scope.getType()}`);
     this.scopes.push(scope);
+
+    // const checkIsPublishAllowed = this.isPublishAllowed.bind(this);
+    // scope.getApplication().registerStreamPublishSecurity(checkIsPublishAllowed);
 
     if (scope.getName() === "oflaDemo") {
       this.scopes.forEach(scope => {

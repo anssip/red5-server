@@ -30,7 +30,10 @@ public class JavaScriptPlugin implements IRed5Plugin {
     private Value executeJs(String functionName, Object... args) {
         Value member = this.plugin.getMember(functionName);
         if (member == null) {
-            throw new IllegalStateException("Function " + functionName + " missing from JavaScript plugin");
+            log.warn("Function " + functionName + " missing from JavaScript plugin");
+            return null;
+            // throw new IllegalStateException("Function " + functionName + " missing from
+            // JavaScript plugin");
         }
         return this.executeInContext(member, args);
     }
