@@ -114,7 +114,74 @@ public class ApplicationJs {
      * 
      * @param listener object to register
      */
-    public void addListener(IApplication listener) {
+    public void addListener(Value listener) {
+        IApplication adapter = new IApplication() {
+
+            private Value execute(String memberName, Object... args) {
+                return plugin.executeInContext(listener.getMember(memberName), app);
+            }
+
+            @Override
+            public boolean appStart(IScope app) {
+                return this.execute("appStart", app).asBoolean();
+            }
+
+            @Override
+            public boolean appConnect(IConnection conn, Object[] params) {
+                return this.execute("appConnect", conn, params).asBoolean();
+            }
+
+            @Override
+            public boolean appJoin(IClient client, IScope app) {
+                return this.execute("appJoin", client, app).asBoolean();
+            }
+
+            @Override
+            public void appDisconnect(IConnection conn) {
+                this.execute("appDisconnect", conn);
+            }
+
+            @Override
+            public void appLeave(IClient client, IScope app) {
+                this.execute("appLeave", client, app);
+            }
+
+            @Override
+            public void appStop(IScope app) {
+                this.execute("appStop", app);
+            }
+
+            @Override
+            public boolean roomStart(IScope room) {
+                return this.execute("roomStart", room).asBoolean();
+            }
+
+            @Override
+            public boolean roomConnect(IConnection conn, Object[] params) {
+                return this.execute("roomConnect", conn, params).asBoolean();
+            }
+
+            @Override
+            public boolean roomJoin(IClient client, IScope room) {
+                return this.execute("roomJoin", client, room).asBoolean();
+            }
+
+            @Override
+            public void roomDisconnect(IConnection conn) {
+                this.execute("roomDisconnect", conn).asBoolean();
+            }
+
+            @Override
+            public void roomLeave(IClient client, IScope room) {
+                this.execute("roomLeave", client, room).asBoolean();
+            }
+
+            @Override
+            public void roomStop(IScope room) {
+                this.execute("roomStop", room).asBoolean();
+            }
+        };
+        this.app.addListener(adapter);
     }
 
     /**
@@ -127,7 +194,7 @@ public class ApplicationJs {
     }
 
     public boolean connect(IConnection conn, IScope scope, Object[] params) {
-        return false;
+        return true;
     }
 
     public void disconnect(IConnection conn, IScope scope) {
@@ -135,7 +202,7 @@ public class ApplicationJs {
     }
 
     public boolean addChildScope(IBasicScope scope) {
-        return false;
+        return true;
     }
 
     public void removeChildScope(IBasicScope scope) {
@@ -143,7 +210,7 @@ public class ApplicationJs {
     }
 
     public boolean join(IClient client, IScope scope) {
-        return false;
+        return true;
     }
 
     public void leave(IClient client, IScope scope) {
@@ -151,11 +218,11 @@ public class ApplicationJs {
     }
 
     public boolean serviceCall(IConnection conn, IServiceCall call) {
-        return false;
+        return true;
     }
 
     public boolean handleEvent(IEvent event) {
-        return false;
+        return true;
     }
 
     public void streamPublishStart(IBroadcastStream stream) {
