@@ -1,7 +1,9 @@
 package org.red5.server.plugin.javascript;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -204,8 +206,11 @@ public class ScopeJs {
         return null;
     }
 
-    public Set<IConnection> getClientConnections() {
-        return null;
+    public ProxyArray getClientConnections() {
+        Set<IConnection> conns = this.scope.getClientConnections();
+        List<ConnectionJsProxy> proxies = conns.stream().map(conn -> new ConnectionJsProxy(conn, this.plugin))
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        return JsUtil.createProxyArray(proxies);
     }
 
     public Set<IConnection> lookupConnections(IClient client) {

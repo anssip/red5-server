@@ -42,7 +42,11 @@ public class JavaScriptPlugin implements IRed5Plugin {
         Value result;
         synchronized (this.ctx) {
             this.ctx.enter();
-            result = member.execute(args);
+            try {
+                result = member.execute(args);
+            } catch (Exception e) {
+                return null;
+            }
             this.ctx.leave();
         }
         return result;

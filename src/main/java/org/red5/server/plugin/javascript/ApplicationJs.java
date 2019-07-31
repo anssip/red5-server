@@ -13,26 +13,17 @@ import org.red5.server.api.IClient;
 import org.red5.server.api.IConnection;
 import org.red5.server.api.event.IEvent;
 import org.red5.server.api.scheduling.IScheduledJob;
-import org.red5.server.api.scheduling.ISchedulingService;
 import org.red5.server.api.scope.IBasicScope;
 import org.red5.server.api.scope.IScope;
-import org.red5.server.api.service.IBroadcastStreamService;
-import org.red5.server.api.service.IOnDemandStreamService;
 import org.red5.server.api.service.IServiceCall;
-import org.red5.server.api.service.IStreamSecurityService;
-import org.red5.server.api.service.ISubscriberStreamService;
 import org.red5.server.api.so.ISharedObject;
 import org.red5.server.api.so.ISharedObjectSecurity;
-import org.red5.server.api.so.ISharedObjectSecurityService;
-import org.red5.server.api.so.ISharedObjectService;
 import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IOnDemandStream;
 import org.red5.server.api.stream.IPlayItem;
-import org.red5.server.api.stream.IStreamAwareScopeHandler;
 import org.red5.server.api.stream.IStreamPlaybackSecurity;
 import org.red5.server.api.stream.IStreamPublishSecurity;
 import org.red5.server.api.stream.ISubscriberStream;
-import org.red5.server.jmx.mxbeans.ApplicationMXBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,7 +109,11 @@ public class ApplicationJs {
         IApplication adapter = new IApplication() {
 
             private Value execute(String memberName, Object... args) {
-                return plugin.executeInContext(listener.getMember(memberName), app);
+                Value member = listener.getMember(memberName);
+                if (member == null) {
+                    return Value.asValue(new Boolean(true));
+                }
+                return plugin.executeInContext(member, app);
             }
 
             @Override
