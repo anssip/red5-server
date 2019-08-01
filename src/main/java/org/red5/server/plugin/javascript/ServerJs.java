@@ -61,7 +61,7 @@ public class ServerJs {
                 try {
                     plugin.executeInContext(scopeCreatedCallback, new ScopeJs(scope, plugin));
                 } catch (Exception e) {
-                    log.error("Failed to call scopeRemovedCallback", e);
+                    log.error("Failed to call scopeCreatedCallback", e);
                 }
             }
 

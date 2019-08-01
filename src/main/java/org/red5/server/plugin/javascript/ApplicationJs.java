@@ -11,11 +11,8 @@ import org.red5.server.adapter.IApplication;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IClient;
 import org.red5.server.api.IConnection;
-import org.red5.server.api.event.IEvent;
 import org.red5.server.api.scheduling.IScheduledJob;
-import org.red5.server.api.scope.IBasicScope;
 import org.red5.server.api.scope.IScope;
-import org.red5.server.api.service.IServiceCall;
 import org.red5.server.api.so.ISharedObject;
 import org.red5.server.api.so.ISharedObjectSecurity;
 import org.red5.server.api.stream.IBroadcastStream;
@@ -33,10 +30,13 @@ public class ApplicationJs {
     private final JavaScriptPlugin plugin;
     private final List<IStreamPublishSecurity> publishSecurities = new ArrayList<IStreamPublishSecurity>();
     private final List<IStreamPlaybackSecurity> playbackSecurities = new ArrayList<IStreamPlaybackSecurity>();
+    private final List<IApplication> listeners = new ArrayList<IApplication>();
+    private final IScope handledScope;
 
-    public ApplicationJs(MultiThreadedApplicationAdapter app, JavaScriptPlugin plugin) {
+    public ApplicationJs(MultiThreadedApplicationAdapter app, JavaScriptPlugin plugin, IScope scope) {
         this.app = app;
         this.plugin = plugin;
+        this.handledScope = scope;
     }
 
     public boolean start(IScope scope) {
@@ -105,78 +105,83 @@ public class ApplicationJs {
      * 
      * @param listener object to register
      */
-    public void addListener(Value listener) {
-        IApplication adapter = new IApplication() {
+    public int addListener(Value listener) {
 
-            private Value execute(String memberName, Object... args) {
-                Value member = listener.getMember(memberName);
+        IApplication adapter = new IApplication() {
+            private boolean execute(Value jsObject, String memberName, Object... args) {
+                if (jsObject == null)
+                    return true;
+                Value member = jsObject.getMember(memberName);
                 if (member == null) {
-                    return Value.asValue(new Boolean(true));
+                    return true;
                 }
-                return plugin.executeInContext(member, app);
+                Value result = plugin.executeInContext(member, app);
+                return result != null && result.isBoolean() ? result.asBoolean() : true;
             }
 
             @Override
             public boolean appStart(IScope app) {
-                return this.execute("appStart", app).asBoolean();
+                return execute(listener, "appStart", app);
             }
 
             @Override
             public boolean appConnect(IConnection conn, Object[] params) {
-                return this.execute("appConnect", conn, params).asBoolean();
+                return execute(listener, "appConnect", conn, params);
             }
 
             @Override
             public boolean appJoin(IClient client, IScope app) {
-                return this.execute("appJoin", client, app).asBoolean();
+                return execute(listener, "appJoin", client, app);
             }
 
             @Override
             public void appDisconnect(IConnection conn) {
-                this.execute("appDisconnect", conn);
+                execute(listener, "appDisconnect", conn);
             }
 
             @Override
             public void appLeave(IClient client, IScope app) {
-                this.execute("appLeave", client, app);
+                execute(listener, "appLeave", client, app);
             }
 
             @Override
             public void appStop(IScope app) {
-                this.execute("appStop", app);
+                execute(listener, "appStop", app);
             }
 
             @Override
             public boolean roomStart(IScope room) {
-                return this.execute("roomStart", room).asBoolean();
+                return execute(listener, "roomStart", room);
             }
 
             @Override
             public boolean roomConnect(IConnection conn, Object[] params) {
-                return this.execute("roomConnect", conn, params).asBoolean();
+                return execute(listener, "roomConnect", conn, params);
             }
 
             @Override
             public boolean roomJoin(IClient client, IScope room) {
-                return this.execute("roomJoin", client, room).asBoolean();
+                return execute(listener, "roomJoin", client, room);
             }
 
             @Override
             public void roomDisconnect(IConnection conn) {
-                this.execute("roomDisconnect", conn).asBoolean();
+                execute(listener, "roomDisconnect", conn);
             }
 
             @Override
             public void roomLeave(IClient client, IScope room) {
-                this.execute("roomLeave", client, room).asBoolean();
+                execute(listener, "roomLeave", client, room);
             }
 
             @Override
             public void roomStop(IScope room) {
-                this.execute("roomStop", room).asBoolean();
+                execute(listener, "roomStop", room);
             }
         };
         this.app.addListener(adapter);
+        this.listeners.add(adapter);
+        return this.listeners.indexOf(adapter);
     }
 
     /**
@@ -185,95 +190,55 @@ public class ApplicationJs {
      * 
      * @param listener object to unregister
      */
-    public void removeListener(IApplication listener) {
-    }
-
-    public boolean connect(IConnection conn, IScope scope, Object[] params) {
-        return true;
-    }
-
-    public void disconnect(IConnection conn, IScope scope) {
-
-    }
-
-    public boolean addChildScope(IBasicScope scope) {
-        return true;
-    }
-
-    public void removeChildScope(IBasicScope scope) {
-
-    }
-
-    public boolean join(IClient client, IScope scope) {
-        return true;
-    }
-
-    public void leave(IClient client, IScope scope) {
-
-    }
-
-    public boolean serviceCall(IConnection conn, IServiceCall call) {
-        return true;
-    }
-
-    public boolean handleEvent(IEvent event) {
-        return true;
+    public void removeListener(int index) {
+        IApplication listener = this.listeners.get(index);
+        if (listener == null) {
+            return;
+        }
+        this.app.removeListener(listener);
+        this.listeners.set(index, null); // don't remove because that would shift the indexes
     }
 
     public void streamPublishStart(IBroadcastStream stream) {
-
     }
 
     public void streamRecordStart(IBroadcastStream stream) {
-
     }
 
     public void streamRecordStop(IBroadcastStream stream) {
-
     }
 
     public void streamBroadcastStart(IBroadcastStream stream) {
-
     }
 
     public void streamBroadcastClose(IBroadcastStream stream) {
-
     }
 
     public void streamSubscriberStart(ISubscriberStream stream) {
-
     }
 
     public void streamSubscriberClose(ISubscriberStream stream) {
-
     }
 
     public void streamPlayItemPlay(ISubscriberStream stream, IPlayItem item, boolean isLive) {
-
     }
 
     public void streamPlayItemStop(ISubscriberStream stream, IPlayItem item) {
-
     }
 
     public void streamPlayItemPause(ISubscriberStream stream, IPlayItem item, int position) {
-
     }
 
     public void streamPlayItemResume(ISubscriberStream stream, IPlayItem item, int position) {
-
     }
 
     public void streamPlayItemSeek(ISubscriberStream stream, IPlayItem item, int position) {
-
     }
 
     public void registerSharedObjectSecurity(ISharedObjectSecurity handler) {
-
     }
 
     public void unregisterSharedObjectSecurity(ISharedObjectSecurity handler) {
-
     }
 
     public Set<ISharedObjectSecurity> getSharedObjectSecurity() {
@@ -332,9 +297,14 @@ public class ApplicationJs {
         return false;
     }
 
-    public IBroadcastStream getBroadcastStream(IScope scope, String name) {
-        return null;
+    public BroadcastStreamJsProxy getBroadcastStream(IScope scope, String name) {
+        return new BroadcastStreamJsProxy(this.app.getBroadcastStream(scope, name), this.plugin);
     }
+
+    // public BroadcastStreamJsProxy getBroadcastStream(String name) {
+    // return new BroadcastStreamJsProxy(this.app.getBroadcastStream(handledScope,
+    // name), this.plugin);
+    // }
 
     public Set<String> getBroadcastStreamNames(IScope scope) {
         return null;

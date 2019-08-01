@@ -39,12 +39,15 @@ public class JavaScriptPlugin implements IRed5Plugin {
     }
 
     public Value executeInContext(Value member, Object... args) {
+        if (member == null)
+            return null;
         Value result;
         synchronized (this.ctx) {
             this.ctx.enter();
             try {
                 result = member.execute(args);
             } catch (Exception e) {
+                this.ctx.leave();
                 return null;
             }
             this.ctx.leave();
@@ -52,10 +55,14 @@ public class JavaScriptPlugin implements IRed5Plugin {
         return result;
     }
 
-    private Value executeJs(String functionName) {
-        Value result = this.executeJs(functionName, new Object[] { null });
+    public Value executeInContext(String functionName, Object... args) {
+        Value result = this.executeJs(functionName, args);
         System.out.println(result.toString());
         return result;
+    }
+
+    private Value executeJs(String functionName) {
+        return executeInContext(functionName, new Object[] { null });
     }
 
     @Override

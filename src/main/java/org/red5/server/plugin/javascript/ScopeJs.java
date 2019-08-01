@@ -28,10 +28,17 @@ public class ScopeJs {
 
     private final IScope scope;
     private final JavaScriptPlugin plugin;
+    private final ApplicationJs application;
 
     public ScopeJs(IScope scope, JavaScriptPlugin plugin) {
         this.scope = scope;
         this.plugin = plugin;
+        this.application = new ApplicationJs((MultiThreadedApplicationAdapter) this.scope.getHandler(), this.plugin,
+                this.scope);
+    }
+
+    public IScope getJavaScope() {
+        return this.scope;
     }
 
     /**
@@ -47,7 +54,9 @@ public class ScopeJs {
     }
 
     public ApplicationJs getApplication() {
-        return new ApplicationJs((MultiThreadedApplicationAdapter) this.scope.getHandler(), this.plugin);
+        return this.application;
+        // return new ApplicationJs((MultiThreadedApplicationAdapter)
+        // this.scope.getHandler(), this.plugin);
     }
 
     public IScopeHandler getHandler() {
